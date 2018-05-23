@@ -16,7 +16,7 @@ class SQLBuilder(object):
         if sql_type == 'create':
             sql_builder = CreateBuilder(kwargs.pop('table_type'))
             sql_str = sql_builder.build(kwargs.pop('table_name'),
-                                        kwargs.pop('columns_type'),
+                                        kwargs.pop('columns_type', None),
                                         kwargs.pop('topic'),
                                         kwargs.pop('value_format'),
                                         kwargs.pop('key', None))
@@ -71,6 +71,7 @@ class BaseCreateBuilder(object):
 class CreateBuilder(BaseCreateBuilder):
     def __init__(self, table_type):
         str_format = "CREATE {} {} ({}) WITH (kafka_topic='{}', value_format='{}'{});"
+        self.avro_str_format = "CREATE {} {} WITH (kafka_topic='{}', value_format='{}'{});"
         super(CreateBuilder, self).__init__(table_type, str_format)
         self.properties = ['kafka_topic', 'value_format', 'key', 'timestamp']
 
@@ -78,10 +79,16 @@ class CreateBuilder(BaseCreateBuilder):
         if value_format.lower() not in self.value_formats:
             raise IllegalValueFormatError(value_format)
 
-        built_colums_type = self._build_colums_type(columns_type)
+        if columns_type:
+            built_colums_type = self._build_colums_type(columns_type)
         built_key = self._build_key(key)
 
-        sql_str = self.sql_format.format(self.table_type, table_name, built_colums_type, topic, value_format, built_key)
+        if value_format.lower() == 'avro' and not columns_type:
+            sql_str = self.avro_str_format.format(self.table_type, table_name, topic, value_format, built_key)
+        else:
+            sql_str = self.sql_format.format(self.table_type, table_name, built_colums_type, topic, value_format, built_key)
+
+
         return sql_str
 
     @staticmethod
