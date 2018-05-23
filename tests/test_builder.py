@@ -12,6 +12,7 @@ class TestSQLBuilder(unittest.TestCase):
     create_table_without_column_definition_avro = "CREATE TABLE users_original WITH (kafka_topic='users', value_format='AVRO');"
     create_table_without_key_delimited = "CREATE TABLE users_original (registertime bigint, gender varchar, regionid varchar, userid varchar) WITH (kafka_topic='users', value_format='DELIMITED');"
     create_stream_without_key = "CREATE STREAM users_original (registertime bigint, gender varchar, regionid varchar, userid varchar) WITH (kafka_topic='users', value_format='JSON');"
+    create_stream_without_column_definition_avro = "CREATE STREAM users_original WITH (kafka_topic='users', value_format='AVRO');"
     create_stream_as_with_condition = "CREATE STREAM pageviews_valid WITH (kafka_topic='pageviews_valid', value_format='DELIMITED', timestamp='logtime') AS SELECT rowtime as logtime, * FROM pageviews_original WHERE userid like 'User_%' AND pageid like 'Page_%'"
     create_stream_as_with_condition_select_star = "CREATE STREAM pageviews_valid WITH (kafka_topic='pageviews_valid', value_format='DELIMITED', timestamp='logtime') AS SELECT * FROM pageviews_original WHERE userid like 'User_%' AND pageid like 'Page_%'"
     create_stream_as_without_condition = "CREATE STREAM pageviews_valid WITH (kafka_topic='pageviews_valid', value_format='DELIMITED', timestamp='logtime') AS SELECT rowtime as logtime, * FROM pageviews_original"
@@ -122,6 +123,20 @@ class TestSQLBuilder(unittest.TestCase):
                                          value_format=value_format)
 
         self.assertEqual(build_sql_str.lower(), self.create_stream_without_key.lower())
+
+    def test_create_stream_without_column_definition_avro(self):
+        table_name = 'users_original'
+
+        topic = 'users'
+        value_format = 'AVRO'
+
+        build_sql_str = SQLBuilder.build('create',
+                                         table_type='stream',
+                                         table_name=table_name,
+                                         topic=topic,
+                                         value_format=value_format)
+
+        self.assertEqual(build_sql_str.lower(), self.create_stream_without_column_definition_avro.lower())
 
     def test_create_stream_as_without_condition(self):
         sql_type = 'create_as'
